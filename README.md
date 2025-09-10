@@ -21,19 +21,14 @@ A Python application for fetching and storing food product data from OpenFoodFac
 
 ### Setup
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd foodfacts
-```
 
-2. Create and activate a virtual environment:
+1. Create and activate a virtual environment:
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-3. Install dependencies:
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
@@ -66,6 +61,13 @@ python main.py "gluten free bread" --max-pages 3 --verbose
 - `--max-pages`: Maximum number of pages to fetch (optional)
 - `--verbose, -v`: Enable verbose logging (optional)
 
+## SQLAlchemy
+- SQLAlchemy was selected for this project due to its intuitive database connection handling and its code-first paradigm, which allows for defining database schemas directly in Python code.
+
+## Assumptions
+- I tried to split the text of the appropriate columns where possible, if empty or non-existant, i used the array and formatted the resulting strings.
+- With more time available, i would achieve ~100% coverage for unit testing.
+
 ## Database Schema
 
 The application creates an SQLite database (`food_products.db`) with the following tables:
@@ -91,15 +93,6 @@ foodfacts/
 ├── README.md          # This file
 └── .venv/             # Virtual environment
 ```
-
-## Code Quality
-
-The project maintains high code quality standards:
-- **Pylint Score**: 9.77/10 (main.py), 9.55/10 (src/)
-- **Type Hints**: Full type annotation support
-- **Documentation**: Comprehensive docstrings and comments
-- **Error Handling**: Robust exception handling throughout
-- **Logging**: Structured logging with configurable levels
 
 ## Development
 
