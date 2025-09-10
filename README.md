@@ -85,10 +85,12 @@ All tables include audit fields (`created_at`, `updated_at`) for tracking change
 ```
 foodfacts/
 ├── main.py              # Main application entry point
+├── tests/
+│   ├── test_process.py # Basic Pytests
 ├── src/
 │   ├── api.py          # OpenFoodFacts API client
 │   ├── models.py       # SQLAlchemy database models  
-│   └── process.py      # Data processing and storage
+│   └── process.py      # Data processing to SQLite
 ├── requirements.txt    # Python dependencies
 ├── README.md          # This file
 └── .venv/             # Virtual environment
@@ -107,6 +109,9 @@ pylint main.py src/
 
 # Run type checking (if mypy is available)
 mypy main.py src/
+
+# Run Pytests
+python -m pytest -v ./tests
 ```
 
 ### Data Processing Functions
@@ -133,14 +138,3 @@ The application generates detailed logs in `food_products.log` including:
 - **Data Validation**: Skip invalid products while continuing processing
 - **Graceful Degradation**: Continue processing even if individual items fail
 
-## Contributing
-
-1. Ensure code passes pylint with score > 9.0
-2. Add type hints to all functions
-3. Include comprehensive docstrings
-4. Follow existing code style and patterns
-5. Test with various search terms and edge cases
-
-## License
-
-This project is licensed under the MIT License.
