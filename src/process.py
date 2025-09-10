@@ -1,3 +1,9 @@
+"""Data processing module for food product information.
+
+This module handles the processing and storage of food product data,
+including normalization, database operations, and batch processing.
+"""
+
 import logging
 from datetime import datetime, timezone
 from typing import Iterator
@@ -17,6 +23,11 @@ from src.models import Category, Country, Ingredient, Nutrient, Product, Session
 logger = logging.getLogger(__name__)
 
 
+def split_text(text: str, seperator=":", index=1) -> str:
+    """Splits the text by seperator"""
+    return text.split(seperator)[index]
+
+
 def normalize_text(text: str) -> str:
     """Normalize text with first word capitalized, rest lowercase"""
     # Replace hyphens with spaces, split into words
@@ -30,6 +41,10 @@ def normalize_text(text: str) -> str:
         if len(words) > 1
         else words[0].capitalize()
     )
+
+
+def capitalize_text(text: str):
+    return text.title()
 
 
 def create_nutrition(product: dict, session: Session) -> None:
@@ -67,7 +82,7 @@ def create_ingredients(product: dict, session: Session) -> None:
             try:
                 product_ingredients = Ingredient(
                     barcode=barcode,
-                    ingredient_text=normalize_text(ingredient),
+                    ingredient_text=split_text(normalize_text(ingredient)),
                     created_at=datetime.fromtimestamp(
                         product.get("created_t", 0), tz=timezone.utc
                     ),
@@ -77,7 +92,7 @@ def create_ingredients(product: dict, session: Session) -> None:
                 )
                 session.add(product_ingredients)
             except IndexError as e:
-                logger.error(f"Error saving ingredient {ingredient}: {e}")
+                logger.error("Error saving ingredient %s: %s", ingredient, e)
                 continue
 
 
@@ -109,7 +124,7 @@ def create_countries(product: dict, session: Session) -> None:
             try:
                 product_countries = Country(
                     barcode=barcode,
-                    country=normalize_text(country.split(":")[1]),
+                    country=capitalize_text(normalize_text(country.split(":")[1])),
                     created_at=datetime.fromtimestamp(
                         product.get("created_t", 0), tz=timezone.utc
                     ),
@@ -119,7 +134,7 @@ def create_countries(product: dict, session: Session) -> None:
                 )
                 session.add(product_countries)
             except IndexError as e:
-                logger.error(f"Error saving country {country}: {e}")
+                logger.error("Error saving country %s: %s", country, e)
                 continue
 
 
@@ -163,7 +178,7 @@ def get_packaging(product: dict) -> str:
             if valid_tags:
                 return ", ".join(valid_tags)
         except (AttributeError, TypeError) as e:
-            logger.debug(f"Error processing packaging_tags: {e}")
+            logger.debug("Error processing packaging_tags: %s", e)
 
     return ""
 
@@ -181,7 +196,7 @@ def create_product(product: dict, session: Session) -> bool:
             session.query(Product).filter(Product.barcode == barcode).first()
         )
         if existing_product:
-            logger.debug(f"Product with barcode {barcode} already exists, skipping")
+            logger.debug("Product with barcode %s already exists, skipping", barcode)
             return False
 
         # Create new product using utility functions
@@ -208,7 +223,7 @@ def create_product(product: dict, session: Session) -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Error creating product {product.get('code', 'unknown')}: {e}")
+        logger.error("Error creating product %s: %s", product.get("code", "unknown"), e)
         raise  # Re-raise to let save_data handle the rollback
 
 
@@ -238,7 +253,9 @@ def save_data(products: Iterator[dict], total_count: int = None):
                     progress.update(task, advance=1)
                 except Exception as e:
                     logger.error(
-                        f"Failed to process product {product.get('code', 'unknown')}: {e}"
+                        "Failed to process product %s: %s",
+                        product.get("code", "unknown"),
+                        e,
                     )
                     products_processed += 1
                     progress.update(task, advance=1)
@@ -246,17 +263,17 @@ def save_data(products: Iterator[dict], total_count: int = None):
 
         # Single commit for all products at the end
         session.commit()
-        logger.info(f"Transaction committed successfully")
+        logger.info("Transaction committed successfully")
 
     except Exception as e:
-        logger.error(f"Error during batch processing: {e}")
+        logger.error("Error during batch processing: %s", e)
         session.rollback()
-        logger.info(f"Transaction rolled back")
+        logger.info("Transaction rolled back")
         raise
     finally:
-        logger.info(f"Products processed: {products_processed}")
-        logger.info(f"Products saved to database: {products_saved}")
+        logger.info("Products processed: %d", products_processed)
+        logger.info("Products saved to database: %d", products_saved)
         logger.info(
-            f"Products skipped (duplicates): {products_processed - products_saved}"
+            "Products skipped (duplicates): %d", products_processed - products_saved
         )
         session.close()

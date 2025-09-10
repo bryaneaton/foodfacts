@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""Food Facts application for fetching and storing product data.
+
+This module provides functionality to search for food products using the
+OpenFoodFacts API and store the results in a local database.
+"""
 import argparse
 import logging
 import sys
@@ -51,12 +56,17 @@ Examples:
 
 
 def main():
+    """Main application entry point.
+
+    Parses command line arguments, sets up logging, initializes the database,
+    and processes product search requests.
+    """
     args = parse_args()
     logger = setup_logging(args.verbose)
 
-    BASE_URL = "https://world.openfoodfacts.org/cgi/search.pl"
+    base_url = "https://world.openfoodfacts.org/cgi/search.pl"
 
-    logger.info(f"Starting Food Facts application for search: '{args.search_terms}'")
+    logger.info("Starting Food Facts application for search: '%s'", args.search_terms)
 
     try:
         # Create database and tables
@@ -65,20 +75,23 @@ def main():
         logger.info("Database initialization complete")
 
         params = {"search_terms": args.search_terms, "json": 1, "search_simple": 1}
-        logger.info(f"Searching for products with terms: {params['search_terms']}")
+        logger.info("Searching for products with terms: %s", params["search_terms"])
 
         if args.max_pages:
-            logger.info(f"Limited to maximum {args.max_pages} pages")
+            logger.info("Limited to maximum %d pages", args.max_pages)
 
-        products, total_count = paginate_products(BASE_URL, params, args.max_pages)
+        products, total_count = paginate_products(base_url, params, args.max_pages)
         save_data(products, total_count)
         logger.info("Search complete. Products processed successfully")
 
     except KeyboardInterrupt:
         logger.info("Process interrupted by user")
         sys.exit(1)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.error("Application error: %s", e, exc_info=True)
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"Application error: {e}", exc_info=True)
+        logger.error("Unexpected error: %s", e, exc_info=True)
         sys.exit(1)
 
     logger.info("Food Facts database loaded!")

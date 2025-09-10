@@ -1,3 +1,9 @@
+"""Database models for food product data.
+
+This module defines SQLAlchemy models for storing food product information
+including products, nutrients, ingredients, categories, and countries.
+"""
+
 import logging
 import os
 from datetime import datetime, timezone
@@ -22,7 +28,11 @@ Base = declarative_base()
 
 
 class AuditMixin:
-    """Base class with audit fields for all tables."""
+    """Base class with audit fields for all tables.
+
+    Provides created_at and updated_at timestamp fields that are automatically
+    managed for all models that inherit from this mixin.
+    """
 
     created_at = Column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
@@ -42,6 +52,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class Product(Base, AuditMixin):
+    """Product model for storing basic product information."""
+
     __tablename__ = "products"
 
     barcode = Column(BigInteger, primary_key=True)
@@ -65,6 +77,8 @@ class Product(Base, AuditMixin):
 
 
 class Nutrient(Base, AuditMixin):
+    """Nutrient model for storing nutritional information per 100g."""
+
     __tablename__ = "nutrients"
 
     barcode = Column(BigInteger, ForeignKey("products.barcode"), primary_key=True)
@@ -83,6 +97,8 @@ class Nutrient(Base, AuditMixin):
 
 
 class Ingredient(Base, AuditMixin):
+    """Ingredient model for storing product ingredients."""
+
     __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True)
@@ -94,6 +110,8 @@ class Ingredient(Base, AuditMixin):
 
 
 class Category(Base, AuditMixin):
+    """Category model for storing product categories."""
+
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True)
@@ -105,6 +123,8 @@ class Category(Base, AuditMixin):
 
 
 class Country(Base, AuditMixin):
+    """Country model for storing product origin countries."""
+
     __tablename__ = "countries"
 
     id = Column(Integer, primary_key=True)
@@ -121,10 +141,10 @@ def create_database():
     try:
         Base.metadata.create_all(bind=engine)
         db_path = os.path.abspath("food_products.db")
-        logger.info(f"Database created successfully at: {db_path}")
+        logger.info("Database created successfully at: %s", db_path)
         print(f"Database created successfully at: {db_path}")
     except Exception as e:
-        logger.error(f"Error creating database: {e}")
+        logger.error("Error creating database: %s", e)
         raise
 
 
@@ -135,5 +155,5 @@ def get_db():
         db = SessionLocal()
         return db
     except Exception as e:
-        logger.error(f"Error creating database session: {e}")
+        logger.error("Error creating database session: %s", e)
         raise
