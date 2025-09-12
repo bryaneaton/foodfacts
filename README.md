@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 Search for products and store in database:
 ```bash
-python main.py "coca cola"
+python main.py "pepperoni pizza"
 ```
 
 ### Advanced Options
@@ -102,7 +102,7 @@ foodfacts/
 
 ```bash
 # Install development dependencies
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
 
 # Run linting
 pylint main.py src/
