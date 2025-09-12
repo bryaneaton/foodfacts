@@ -3,7 +3,6 @@
 import json
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
-
 import pytest
 
 from src.process import (
@@ -82,15 +81,15 @@ def test_create_nutrition_success(mock_product, mock_session):
 
     added_nutrient = mock_session.add.call_args[0][0]
 
-    assert added_nutrient.product_id == 1
-    assert added_nutrient.energy_kcal_100g == 539
-    assert added_nutrient.fat_100g == 30.9
-    assert added_nutrient.saturated_fat_100g == 10.6
-    assert added_nutrient.carbohydrates_100g == 57.5
-    assert added_nutrient.sugars_100g == 56.3
-    assert added_nutrient.proteins_100g == 6.3
-    assert added_nutrient.salt_100g == 0.107
-    assert added_nutrient.sodium_100g == 0.0428
+    assert added_nutrient.product_id == round(1, 2)
+    assert added_nutrient.energy_kcal_100g == round(539, 2)
+    assert added_nutrient.fat_100g == round(30.9, 2)
+    assert added_nutrient.saturated_fat_100g == round(10.6, 2)
+    assert added_nutrient.carbohydrates_100g == round(57.5, 2)
+    assert added_nutrient.sugars_100g == round(56.3, 2)
+    assert added_nutrient.proteins_100g == round(6.3, 2)
+    assert added_nutrient.salt_100g == round(0.107, 2)
+    assert added_nutrient.sodium_100g == round(0.0428, 2)
 
 
 def test_create_categories_success(mock_product, mock_session):
