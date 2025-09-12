@@ -14,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -67,9 +68,9 @@ class Product(Base, AuditMixin):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    barcode = Column(String) # Barcode could have leading zeros, make this a string and use id as a primary key
+    barcode = Column(String, index=True) # Barcode could have leading zeros, make this a string and use id as a primary key
     product_name = Column(String)
-    brand = Column(String)
+    brands = Column(String)
     packaging = Column(String)
 
     # Relationships
@@ -84,6 +85,10 @@ class Product(Base, AuditMixin):
     )
     countries = relationship(
         "Country", back_populates="product", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index('ix_product_barcode_name', 'barcode', 'product_name', unique=True),
     )
 
 

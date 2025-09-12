@@ -215,7 +215,7 @@ def create_product(product: dict, session: Session) -> bool:
         new_product = Product(
             barcode=barcode,
             product_name=product.get("product_name", product.get("name", "")),
-            brand=product.get("brand", ""),
+            brands=product.get("brands", ""),
             packaging=get_packaging(product),
             created_at=datetime.fromtimestamp(
                 product.get("created_t", 0), tz=timezone.utc

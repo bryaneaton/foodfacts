@@ -39,6 +39,7 @@ Examples:
 
     parser.add_argument(
         "search_terms",
+        type=str,
         help="Search terms to find products (e.g., 'coca cola', 'chocolate')",
     )
 
