@@ -6,7 +6,7 @@ including normalization, database operations, and batch processing.
 
 import logging
 from datetime import datetime, timezone
-from typing import Iterator
+from typing import Iterator, Dict, Any, Optional
 
 from rich.progress import (
     BarColumn,
@@ -55,7 +55,7 @@ def capitalize_text(text: str):
     return text.title()
 
 
-def create_nutrition(product_id: int, product: dict, session: Session) -> None:
+def create_nutrition(product_id: int, product: Dict[str, Any], session: Session) -> None:
     """Create nutrition for a product"""
     nutrients = product.get("nutriments", {})
     barcode = product.get("code", "")
@@ -82,7 +82,7 @@ def create_nutrition(product_id: int, product: dict, session: Session) -> None:
         session.add(product_nutrients)
 
 
-def create_ingredients(product_id: int, product: dict, session: Session) -> None:
+def create_ingredients(product_id: int, product: Dict[str, Any], session: Session) -> None:
     """Create ingredients for a product"""
     ingredients = product.get("ingredients_tags", [])
     barcode = product.get("code", "")
@@ -105,7 +105,7 @@ def create_ingredients(product_id: int, product: dict, session: Session) -> None
                 continue
 
 
-def create_categories(product_id: int, product: dict, session: Session) -> None:
+def create_categories(product_id: int, product: Dict[str, Any], session: Session) -> None:
     """Create categories for a product"""
     categories = product.get("categories", "")
     barcode = product.get("code", "")
@@ -125,7 +125,7 @@ def create_categories(product_id: int, product: dict, session: Session) -> None:
             session.add(product_categories)
 
 
-def create_countries(product_id: int, product: dict, session: Session) -> None:
+def create_countries(product_id: int, product: Dict[str, Any], session: Session) -> None:
     """Create countries for a product"""
     countries = product.get("countries_tags", [])
     barcode = product.get("code", "")
@@ -149,7 +149,7 @@ def create_countries(product_id: int, product: dict, session: Session) -> None:
                 continue
 
 
-def get_packaging(product: dict) -> str:
+def get_packaging(product: Dict[str, Any]) -> str:
     """Get the packaging from a product dictionary with priority order."""
     if not product or not isinstance(product, dict):
         return ""
@@ -194,7 +194,7 @@ def get_packaging(product: dict) -> str:
     return ""
 
 
-def create_product(product: dict, session: Session) -> bool:
+def create_product(product: Dict[str, Any], session: Session) -> bool:
     """Create a product and return True if created, False if skipped"""
     try:
         barcode = product.get("code", "")
@@ -229,10 +229,11 @@ def create_product(product: dict, session: Session) -> bool:
         logger.debug("After flush: new_product.id = %s", new_product.id)
 
         # Create related data
-        create_nutrition(product_id=new_product.id, product=product, session=session)
-        create_ingredients(product_id=new_product.id, product=product, session=session)
-        create_categories(product_id=new_product.id, product=product, session=session)
-        create_countries(product_id=new_product.id, product=product, session=session)
+        product_id: int = new_product.id  # type: ignore
+        create_nutrition(product_id=product_id, product=product, session=session)
+        create_ingredients(product_id=product_id, product=product, session=session)
+        create_categories(product_id=product_id, product=product, session=session)
+        create_countries(product_id=product_id, product=product, session=session)
 
         return True
 
@@ -241,7 +242,7 @@ def create_product(product: dict, session: Session) -> bool:
         raise  # Re-raise to let save_data handle the rollback
 
 
-def save_data(products: Iterator[dict], total_count: int = None):
+def save_data(products: Iterator[Dict[str, Any]], total_count: Optional[int] = None) -> None:
     """Process the products iterator"""
     session = SessionLocal()
     products_saved = 0

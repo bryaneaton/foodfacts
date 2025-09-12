@@ -6,7 +6,7 @@ including pagination, rate limiting, and error handling.
 
 import logging
 from time import sleep
-from typing import Iterator
+from typing import Iterator, Optional, Dict, Any, Tuple
 
 import niquests as niq
 from niquests import Response
@@ -26,7 +26,7 @@ class OpenFoodFactsAPI:
         self.base_backoff_delay = 1.0  # Base delay in seconds
         self.max_backoff_delay = 60.0  # Max delay in seconds
 
-    def _make_request_with_retry(self, url: str, params: dict = None) -> Response:
+    def _make_request_with_retry(self, url: str, params: Optional[Dict[str, Any]] = None) -> Response:
         """Make HTTP request with retry and exponential backoff"""
         last_exception = None
 
@@ -35,7 +35,7 @@ class OpenFoodFactsAPI:
                 response = niq.get(url, params=params, headers=self.headers)
                 response.raise_for_status()
                 return response
-            except (niq.RequestException, niq.HTTPStatusError) as e:
+            except niq.RequestException as e:
                 last_exception = e
 
                 if attempt == self.max_retries:
@@ -68,6 +68,7 @@ class OpenFoodFactsAPI:
 
         if last_exception:
             raise last_exception
+        raise RuntimeError("Should not reach here")
 
     def get_total_count(self, response: Response) -> int:
         """Get total count of products for given search parameters"""
@@ -80,8 +81,8 @@ class OpenFoodFactsAPI:
             return 0
 
     def paginate_products(
-        self, params: dict, max_pages: int = None
-    ) -> tuple[Iterator[dict], int]:
+        self, params: Dict[str, Any], max_pages: Optional[int] = None
+    ) -> Tuple[Iterator[Dict[str, Any]], int]:
         """Returns iterator of products and total count"""
         logger.info("Starting product pagination with params: %s", params)
         if max_pages:
@@ -174,8 +175,8 @@ class OpenFoodFactsAPI:
 
 # Convenience function for backward compatibility
 def paginate_products(
-    base_url: str, params: dict, max_pages: int = None
-) -> tuple[Iterator[dict], int]:
+    base_url: str, params: Dict[str, Any], max_pages: Optional[int] = None
+) -> Tuple[Iterator[Dict[str, Any]], int]:
     """Convenience function that uses OpenFoodFactsAPI class"""
     api = OpenFoodFactsAPI(base_url)
     return api.paginate_products(params, max_pages)

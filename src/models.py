@@ -8,6 +8,7 @@ import logging
 import os
 from datetime import datetime, timezone
 
+from typing import Any, Optional, Type
 from sqlalchemy import (
     Column,
     DateTime,
@@ -20,12 +21,13 @@ from sqlalchemy import (
     create_engine,
     event,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
+from sqlalchemy.orm import relationship, sessionmaker, Session
 
 logger = logging.getLogger(__name__)
 
-Base = declarative_base()
+_Base = declarative_base()
+Base: Type[Any] = _Base
 
 
 class AuditMixin:
@@ -49,7 +51,7 @@ class AuditMixin:
 # Database configuration
 DATABASE_URL = "sqlite:///food_products.db"
 engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal: sessionmaker[Session] = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # Enable foreign key enforcement for SQLite
@@ -113,7 +115,7 @@ class Nutrient(Base, AuditMixin):
     # Relationship
     product = relationship("Product", back_populates="nutrients")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         # Round float values to 2 decimal places before storing
         float_fields = [
             "energy_kcal_100g",
@@ -129,7 +131,7 @@ class Nutrient(Base, AuditMixin):
 
         for field in float_fields:
             if field in kwargs and kwargs[field] is not None:
-                kwargs[field] = round(kwargs[field], 2)
+                kwargs[field] = round(float(kwargs[field]), 2)
 
         super().__init__(**kwargs)
 
@@ -197,11 +199,11 @@ def get_db():
         raise
 
 
-def get_product_id_by_barcode(barcode: str, db: SessionLocal) -> int | None:
+def get_product_id_by_barcode(barcode: str, db: Session) -> Optional[int]:
     """Lookup product ID by barcode."""
     try:
         product = db.query(Product).filter(Product.barcode == barcode).first()
-        return product.id if product else None
+        return int(product.id) if product else None  # type: ignore
     except Exception as e:
         logger.error("Error looking up product by barcode %s: %s", barcode, e)
         return None
