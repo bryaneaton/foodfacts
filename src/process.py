@@ -25,7 +25,6 @@ from src.models import (
     Nutrient,
     Product,
     SessionLocal,
-    get_product_id_by_barcode,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,18 +60,18 @@ def create_nutrition(product_id: int, product: dict, session: Session) -> None:
     nutrients = product.get("nutriments", {})
     barcode = product.get("code", "")
     if nutrients and barcode:
-        
+
         product_nutrients = Nutrient(
             product_id=product_id,
-            energy_kcal_100g=nutrients.get("energy-kcal_100g", 0),
-            fat_100g=nutrients.get("fat_100g", 0),
-            saturated_fat_100g=nutrients.get("saturated-fat_100g", 0),
-            carbohydrates_100g=nutrients.get("carbohydrates_100g", 0),
-            sugars_100g=nutrients.get("sugars_100g", 0),
-            fiber_100g=nutrients.get("fiber_100g", 0),
-            proteins_100g=nutrients.get("proteins_100g", 0),
-            salt_100g=nutrients.get("salt_100g", 0),
-            sodium_100g=nutrients.get("sodium_100g", 0),
+            energy_kcal_100g=nutrients.get("energy-kcal_100g"),
+            fat_100g=nutrients.get("fat_100g"),
+            saturated_fat_100g=nutrients.get("saturated-fat_100g"),
+            carbohydrates_100g=nutrients.get("carbohydrates_100g"),
+            sugars_100g=nutrients.get("sugars_100g"),
+            fiber_100g=nutrients.get("fiber_100g"),
+            proteins_100g=nutrients.get("proteins_100g"),
+            salt_100g=nutrients.get("salt_100g"),
+            sodium_100g=nutrients.get("sodium_100g"),
             created_at=datetime.fromtimestamp(
                 product.get("created_t", 0), tz=timezone.utc
             ),
@@ -111,7 +110,7 @@ def create_categories(product_id: int, product: dict, session: Session) -> None:
     categories = product.get("categories", "")
     barcode = product.get("code", "")
     if categories and barcode:
-            
+
         for category in categories.split(","):
             product_categories = Category(
                 product_id=product_id,
@@ -131,7 +130,7 @@ def create_countries(product_id: int, product: dict, session: Session) -> None:
     countries = product.get("countries_tags", [])
     barcode = product.get("code", "")
     if countries and barcode:
-            
+
         for country in countries:
             try:
                 product_countries = Country(
@@ -228,7 +227,6 @@ def create_product(product: dict, session: Session) -> bool:
         logger.debug("Before flush: new_product.id = %s", new_product.id)
         session.flush()  # Get the autoincremented ID without committing
         logger.debug("After flush: new_product.id = %s", new_product.id)
-
 
         # Create related data
         create_nutrition(product_id=new_product.id, product=product, session=session)

@@ -10,12 +10,10 @@ from src.process import (
     capitalize_text,
     create_categories,
     create_countries,
-    create_ingredients,
     create_nutrition,
     create_product,
     get_packaging,
     normalize_text,
-    save_data,
     split_text,
 )
 

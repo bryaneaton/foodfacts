@@ -9,7 +9,6 @@ import os
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    BigInteger,
     Column,
     DateTime,
     Float,
@@ -68,7 +67,9 @@ class Product(Base, AuditMixin):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    barcode = Column(String, index=True) # Barcode could have leading zeros, make this a string and use id as a primary key
+    barcode = Column(
+        String, index=True
+    )  # Barcode could have leading zeros, make this a string and use id as a primary key
     product_name = Column(String)
     brands = Column(String)
     packaging = Column(String)
@@ -88,7 +89,7 @@ class Product(Base, AuditMixin):
     )
 
     __table_args__ = (
-        Index('ix_product_barcode_name', 'barcode', 'product_name', unique=True),
+        Index("ix_product_barcode_name", "barcode", "product_name", unique=True),
     )
 
 
@@ -111,6 +112,26 @@ class Nutrient(Base, AuditMixin):
 
     # Relationship
     product = relationship("Product", back_populates="nutrients")
+
+    def __init__(self, **kwargs):
+        # Round float values to 2 decimal places before storing
+        float_fields = [
+            "energy_kcal_100g",
+            "fat_100g",
+            "saturated_fat_100g",
+            "carbohydrates_100g",
+            "sugars_100g",
+            "fiber_100g",
+            "proteins_100g",
+            "salt_100g",
+            "sodium_100g",
+        ]
+
+        for field in float_fields:
+            if field in kwargs and kwargs[field] is not None:
+                kwargs[field] = round(kwargs[field], 2)
+
+        super().__init__(**kwargs)
 
 
 class Ingredient(Base, AuditMixin):
