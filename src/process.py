@@ -52,18 +52,15 @@ def normalize_text(text: str) -> str:
 
 
 def capitalize_text(text: str):
+    """Capitalize text"""
     return text.title()
 
 
-def create_nutrition(product: dict, session: Session) -> None:
+def create_nutrition(product_id: int, product: dict, session: Session) -> None:
     """Create nutrition for a product"""
     nutrients = product.get("nutriments", {})
     barcode = product.get("code", "")
     if nutrients and barcode:
-        product_id = get_product_id_by_barcode(barcode, session)
-        if not product_id:
-            logger.warning("Product ID not found for barcode %s, skipping nutrition", barcode)
-            return
         
         product_nutrients = Nutrient(
             product_id=product_id,
@@ -86,16 +83,11 @@ def create_nutrition(product: dict, session: Session) -> None:
         session.add(product_nutrients)
 
 
-def create_ingredients(product: dict, session: Session) -> None:
+def create_ingredients(product_id: int, product: dict, session: Session) -> None:
     """Create ingredients for a product"""
     ingredients = product.get("ingredients_tags", [])
     barcode = product.get("code", "")
     if ingredients and barcode:
-        product_id = get_product_id_by_barcode(barcode, session)
-        if not product_id:
-            logger.warning("Product ID not found for barcode %s, skipping ingredients", barcode)
-            return
-            
         for ingredient in ingredients:
             try:
                 product_ingredients = Ingredient(
@@ -114,15 +106,11 @@ def create_ingredients(product: dict, session: Session) -> None:
                 continue
 
 
-def create_categories(product: dict, session: Session) -> None:
+def create_categories(product_id: int, product: dict, session: Session) -> None:
     """Create categories for a product"""
     categories = product.get("categories", "")
     barcode = product.get("code", "")
     if categories and barcode:
-        product_id = get_product_id_by_barcode(barcode, session)
-        if not product_id:
-            logger.warning("Product ID not found for barcode %s, skipping categories", barcode)
-            return
             
         for category in categories.split(","):
             product_categories = Category(
@@ -138,15 +126,11 @@ def create_categories(product: dict, session: Session) -> None:
             session.add(product_categories)
 
 
-def create_countries(product: dict, session: Session) -> None:
+def create_countries(product_id: int, product: dict, session: Session) -> None:
     """Create countries for a product"""
     countries = product.get("countries_tags", [])
     barcode = product.get("code", "")
     if countries and barcode:
-        product_id = get_product_id_by_barcode(barcode, session)
-        if not product_id:
-            logger.warning("Product ID not found for barcode %s, skipping countries", barcode)
-            return
             
         for country in countries:
             try:
@@ -241,12 +225,16 @@ def create_product(product: dict, session: Session) -> bool:
             ),
         )
         session.add(new_product)
+        logger.debug("Before flush: new_product.id = %s", new_product.id)
+        session.flush()  # Get the autoincremented ID without committing
+        logger.debug("After flush: new_product.id = %s", new_product.id)
+
 
         # Create related data
-        create_nutrition(product, session)
-        create_ingredients(product, session)
-        create_categories(product, session)
-        create_countries(product, session)
+        create_nutrition(product_id=new_product.id, product=product, session=session)
+        create_ingredients(product_id=new_product.id, product=product, session=session)
+        create_categories(product_id=new_product.id, product=product, session=session)
+        create_countries(product_id=new_product.id, product=product, session=session)
 
         return True
 

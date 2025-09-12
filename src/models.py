@@ -66,8 +66,8 @@ class Product(Base, AuditMixin):
 
     __tablename__ = "products"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    barcode = Column(String)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    barcode = Column(String) # Barcode could have leading zeros, make this a string and use id as a primary key
     product_name = Column(String)
     brand = Column(String)
     packaging = Column(String)
@@ -93,7 +93,7 @@ class Nutrient(Base, AuditMixin):
     __tablename__ = "nutrients"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(BigInteger, ForeignKey("products.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
     energy_kcal_100g = Column(Float)
     fat_100g = Column(Float)
     saturated_fat_100g = Column(Float)
@@ -114,7 +114,7 @@ class Ingredient(Base, AuditMixin):
     __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(BigInteger, ForeignKey("products.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
     ingredient_text = Column(Text)
 
     # Relationship
@@ -127,7 +127,7 @@ class Category(Base, AuditMixin):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(BigInteger, ForeignKey("products.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
     category = Column(String)
 
     # Relationship
@@ -140,7 +140,7 @@ class Country(Base, AuditMixin):
     __tablename__ = "countries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(BigInteger, ForeignKey("products.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
     country = Column(String)
 
     # Relationship
