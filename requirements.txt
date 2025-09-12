@@ -1,3 +1,4 @@
 sqlalchemy
 niquests
 rich
+pytest
