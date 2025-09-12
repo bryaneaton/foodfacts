@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    event,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -47,8 +48,17 @@ class AuditMixin:
 
 # Database configuration
 DATABASE_URL = "sqlite:///food_products.db"
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# Enable foreign key enforcement for SQLite
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Enable foreign key constraints for SQLite."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 
 class Product(Base, AuditMixin):
@@ -56,7 +66,8 @@ class Product(Base, AuditMixin):
 
     __tablename__ = "products"
 
-    barcode = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    barcode = Column(String)
     product_name = Column(String)
     brand = Column(String)
     packaging = Column(String)
@@ -81,7 +92,8 @@ class Nutrient(Base, AuditMixin):
 
     __tablename__ = "nutrients"
 
-    barcode = Column(BigInteger, ForeignKey("products.barcode"), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(BigInteger, ForeignKey("products.id"))
     energy_kcal_100g = Column(Float)
     fat_100g = Column(Float)
     saturated_fat_100g = Column(Float)
@@ -101,8 +113,8 @@ class Ingredient(Base, AuditMixin):
 
     __tablename__ = "ingredients"
 
-    id = Column(Integer, primary_key=True)
-    barcode = Column(BigInteger, ForeignKey("products.barcode"))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(BigInteger, ForeignKey("products.id"))
     ingredient_text = Column(Text)
 
     # Relationship
@@ -114,8 +126,8 @@ class Category(Base, AuditMixin):
 
     __tablename__ = "categories"
 
-    id = Column(Integer, primary_key=True)
-    barcode = Column(BigInteger, ForeignKey("products.barcode"))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(BigInteger, ForeignKey("products.id"))
     category = Column(String)
 
     # Relationship
@@ -127,8 +139,8 @@ class Country(Base, AuditMixin):
 
     __tablename__ = "countries"
 
-    id = Column(Integer, primary_key=True)
-    barcode = Column(BigInteger, ForeignKey("products.barcode"))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(BigInteger, ForeignKey("products.id"))
     country = Column(String)
 
     # Relationship
@@ -157,3 +169,13 @@ def get_db():
     except Exception as e:
         logger.error("Error creating database session: %s", e)
         raise
+
+
+def get_product_id_by_barcode(barcode: str, db: SessionLocal) -> int | None:
+    """Lookup product ID by barcode."""
+    try:
+        product = db.query(Product).filter(Product.barcode == barcode).first()
+        return product.id if product else None
+    except Exception as e:
+        logger.error("Error looking up product by barcode %s: %s", barcode, e)
+        return None

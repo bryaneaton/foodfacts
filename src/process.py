@@ -18,7 +18,15 @@ from rich.progress import (
 )
 from sqlalchemy.orm.session import Session
 
-from src.models import Category, Country, Ingredient, Nutrient, Product, SessionLocal
+from src.models import (
+    Category,
+    Country,
+    Ingredient,
+    Nutrient,
+    Product,
+    SessionLocal,
+    get_product_id_by_barcode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +60,13 @@ def create_nutrition(product: dict, session: Session) -> None:
     nutrients = product.get("nutriments", {})
     barcode = product.get("code", "")
     if nutrients and barcode:
+        product_id = get_product_id_by_barcode(barcode, session)
+        if not product_id:
+            logger.warning("Product ID not found for barcode %s, skipping nutrition", barcode)
+            return
+        
         product_nutrients = Nutrient(
-            barcode=barcode,
+            product_id=product_id,
             energy_kcal_100g=nutrients.get("energy-kcal_100g", 0),
             fat_100g=nutrients.get("fat_100g", 0),
             saturated_fat_100g=nutrients.get("saturated-fat_100g", 0),
@@ -78,10 +91,15 @@ def create_ingredients(product: dict, session: Session) -> None:
     ingredients = product.get("ingredients_tags", [])
     barcode = product.get("code", "")
     if ingredients and barcode:
+        product_id = get_product_id_by_barcode(barcode, session)
+        if not product_id:
+            logger.warning("Product ID not found for barcode %s, skipping ingredients", barcode)
+            return
+            
         for ingredient in ingredients:
             try:
                 product_ingredients = Ingredient(
-                    barcode=barcode,
+                    product_id=product_id,
                     ingredient_text=split_text(normalize_text(ingredient)),
                     created_at=datetime.fromtimestamp(
                         product.get("created_t", 0), tz=timezone.utc
@@ -101,9 +119,14 @@ def create_categories(product: dict, session: Session) -> None:
     categories = product.get("categories", "")
     barcode = product.get("code", "")
     if categories and barcode:
+        product_id = get_product_id_by_barcode(barcode, session)
+        if not product_id:
+            logger.warning("Product ID not found for barcode %s, skipping categories", barcode)
+            return
+            
         for category in categories.split(","):
             product_categories = Category(
-                barcode=barcode,
+                product_id=product_id,
                 category=category.strip(),
                 created_at=datetime.fromtimestamp(
                     product.get("created_t", 0), tz=timezone.utc
@@ -120,10 +143,15 @@ def create_countries(product: dict, session: Session) -> None:
     countries = product.get("countries_tags", [])
     barcode = product.get("code", "")
     if countries and barcode:
+        product_id = get_product_id_by_barcode(barcode, session)
+        if not product_id:
+            logger.warning("Product ID not found for barcode %s, skipping countries", barcode)
+            return
+            
         for country in countries:
             try:
                 product_countries = Country(
-                    barcode=barcode,
+                    product_id=product_id,
                     country=capitalize_text(normalize_text(country.split(":")[1])),
                     created_at=datetime.fromtimestamp(
                         product.get("created_t", 0), tz=timezone.utc
